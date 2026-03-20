@@ -29,7 +29,11 @@ _llm = ChatOpenAI(
 _agent = create_react_agent(model=_llm, tools=[], prompt=SYSTEM_PROMPT)
 
 
-async def get_response(user_message: str) -> str:
-    logger.info(f"Received user message: {user_message}")
-    result = await _agent.ainvoke({"messages": [("user", user_message)]})
+async def get_response(messages: list[dict]) -> str:
+    """
+    messages: list of {"role": "user"|"assistant", "content": str}
+    """
+    logger.info(f"Invoking agent with {len(messages)} message(s)")
+    lc_messages = [(m["role"], m["content"]) for m in messages]
+    result = await _agent.ainvoke({"messages": lc_messages})
     return result["messages"][-1].content

@@ -23,14 +23,14 @@ cp .env.example .env
 
 Fill in `.env`:
 
-| Variable | Description |
-|----------|-------------|
-| `SLACK_BOT_TOKEN` | `xoxb-...` Bot User OAuth Token |
-| `SLACK_APP_TOKEN` | `xapp-...` App-Level Token (Socket Mode) |
-| `OPENAI_API_KEY` | `sk-...` OpenAI API key |
-| `OPENAI_MODEL` | LLM model (default: `gpt-4o`) |
-| `TRIGGER_EMOJI` | Emoji name that triggers the bot (default: `robot_face`) |
-| `LOG_LEVEL` | Log level (default: `INFO`) |
+| Variable | Description                                        |
+|----------|----------------------------------------------------|
+| `SLACK_BOT_TOKEN` | `xoxb-...` Bot User OAuth Token                    |
+| `SLACK_APP_TOKEN` | `xapp-...` App-Level Token (Socket Mode)           |
+| `OPENAI_API_KEY` | `sk-...` OpenAI API key                            |
+| `OPENAI_MODEL` | LLM model (default: `gpt-4o`)                      |
+| `TRIGGER_EMOJI` | Emoji name that triggers the bot (default: `pidi`) |
+| `LOG_LEVEL` | Log level (default: `INFO`)                        |
 
 ### 3. Run locally
 

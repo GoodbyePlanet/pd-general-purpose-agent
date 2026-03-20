@@ -13,22 +13,88 @@ slack_app = AsyncApp(token=settings.slack_bot_token)
 socket_handler = AsyncSocketModeHandler(slack_app, settings.slack_app_token)
 
 
+async def build_thread_history(client, channel: str, thread_ts: str, bot_user_id: str) -> list[dict]:
+    """Fetch thread messages and convert to role/content history for the LLM."""
+    result = await client.conversations_replies(channel=channel, ts=thread_ts)
+    messages = result.get("messages", [])
+    history = []
+    for msg in messages:
+        text = re.sub(r"<@\w+>", "", msg.get("text", "")).strip()
+        if not text:
+            continue
+        is_bot = msg.get("bot_id") or msg.get("user") == bot_user_id
+        history.append({"role": "assistant" if is_bot else "user", "content": text[:4000]})
+    return history
+
+
 @slack_app.event("app_mention")
-async def handle_mention(event, say):
+async def handle_mention(event, client, say):
     logger.info(f"Handling app_mention event: {event}")
     thread_ts = event.get("thread_ts") or event.get("ts")
+    channel = event["channel"]
     try:
-        raw_text = event.get("text", "")
-        text = re.sub(r"<@\w+>", "", raw_text).strip()
+        bot_info = await client.auth_test()
+        bot_user_id = bot_info["user_id"]
 
-        if not text:
+        if event.get("thread_ts"):
+            # In an existing thread — send full history
+            messages = await build_thread_history(client, channel, thread_ts, bot_user_id)
+        else:
+            # New top-level mention — just the current message
+            raw_text = event.get("text", "")
+            text = re.sub(r"<@\w+>", "", raw_text).strip()
+            if not text:
+                return
+            messages = [{"role": "user", "content": text[:4000]}]
+
+        if not messages:
             return
 
-        # Truncate to avoid sending huge messages to the LLM
-        reply = await get_response(text[:4000])
+        reply = await get_response(messages)
         await say(text=reply, thread_ts=thread_ts)
     except Exception:
         logger.exception("Error handling app_mention")
+        await say(text="Sorry, something went wrong.", thread_ts=thread_ts)
+
+
+@slack_app.event("message")
+async def handle_thread_message(event, client, say):
+    # Only handle messages inside threads, not top-level posts
+    logger.info(f"Handling thread message event: {event}")
+    thread_ts = event.get("thread_ts")
+    if not thread_ts or event.get("ts") == thread_ts:
+        logger.info("handle_thread_message: skipping — not a thread reply")
+        return
+
+    # Ignore bot messages and mentions (handled by handle_mention)
+    if event.get("bot_id") or event.get("subtype"):
+        logger.info("handle_thread_message: skipping — bot message or subtype")
+        return
+    if re.search(r"<@\w+>", event.get("text", "")):
+        logger.info("handle_thread_message: skipping — contains mention")
+        return
+
+    channel = event["channel"]
+
+    try:
+        bot_info = await client.auth_test()
+        bot_user_id = bot_info["user_id"]
+
+        messages = await build_thread_history(client, channel, thread_ts, bot_user_id)
+        logger.info(f"handle_thread_message: thread history has {len(messages)} messages: {messages}")
+
+        bot_was_in_thread = any(m["role"] == "assistant" for m in messages[:-1])
+        if not bot_was_in_thread:
+            logger.info("handle_thread_message: skipping — bot not in thread")
+            return
+
+        if not messages:
+            return
+
+        reply = await get_response(messages)
+        await say(text=reply, thread_ts=thread_ts)
+    except Exception:
+        logger.exception("Error handling thread message")
         await say(text="Sorry, something went wrong.", thread_ts=thread_ts)
 
 
@@ -36,7 +102,6 @@ async def handle_mention(event, say):
 async def handle_reaction(event, client):
     logger.info(f"Handling reaction_added event: {event}")
     if event.get("reaction") != settings.trigger_emoji:
-        logger.info(f"Reaction is not {settings.trigger_emoji}, skipping")
         return
 
     channel = event["item"]["channel"]
@@ -49,11 +114,11 @@ async def handle_reaction(event, client):
             inclusive=True,
             limit=1,
         )
-        messages = result.get("messages", [])
-        if not messages:
+        slack_messages = result.get("messages", [])
+        if not slack_messages:
             return
 
-        message = messages[0]
+        message = slack_messages[0]
 
         # Skip if the message is from the bot itself
         bot_info = await client.auth_test()
@@ -64,7 +129,7 @@ async def handle_reaction(event, client):
         if not text:
             return
 
-        reply = await get_response(text[:4000])
+        reply = await get_response([{"role": "user", "content": text[:4000]}])
         await client.chat_postMessage(
             channel=channel,
             thread_ts=message_ts,
