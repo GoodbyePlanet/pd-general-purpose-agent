@@ -54,7 +54,7 @@ All config via environment variables (see `.env.example`):
 - `SLACK_APP_TOKEN` — xapp-... (App-Level Token for Socket Mode)
 - `OPENAI_API_KEY` — sk-...
 - `OPENAI_MODEL` — default: gpt-4o
-- `TRIGGER_EMOJI` — emoji name that triggers the bot (default: robot_face)
+- `TRIGGER_EMOJI` — emoji name that triggers the bot (default: pidi)
 
 ## Code Style
 
