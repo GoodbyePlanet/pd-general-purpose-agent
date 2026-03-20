@@ -36,6 +36,7 @@ async def handle_mention(event, say):
 async def handle_reaction(event, client):
     logger.info(f"Handling reaction_added event: {event}")
     if event.get("reaction") != settings.trigger_emoji:
+        logger.info(f"Reaction is not {settings.trigger_emoji}, skipping")
         return
 
     channel = event["item"]["channel"]

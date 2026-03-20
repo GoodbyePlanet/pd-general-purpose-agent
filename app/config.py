@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     slack_app_token: str
     openai_api_key: str
     openai_model: str = "gpt-4o"
-    trigger_emoji: str = "robot_face"
+    trigger_emoji: str = "pd-robot"
     log_level: str = "INFO"
     host: str = "0.0.0.0"
     port: int = 8000

@@ -30,5 +30,6 @@ _agent = create_react_agent(model=_llm, tools=[], prompt=SYSTEM_PROMPT)
 
 
 async def get_response(user_message: str) -> str:
+    logger.info(f"Received user message: {user_message}")
     result = await _agent.ainvoke({"messages": [("user", user_message)]})
     return result["messages"][-1].content
