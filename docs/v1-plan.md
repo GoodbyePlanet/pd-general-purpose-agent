@@ -71,20 +71,31 @@ pydantic-settings>=2.5,<3
 
 ### Step 5: LangGraph Agent
 - Create `app/agent.py` with `create_react_agent` (empty tools list, GPT-4o)
-- System prompt: helpful Slack assistant, concise responses, Slack markdown
-- Expose single `async get_response(user_message: str) -> str` function
-- **Verify**: test script calling `get_response("hello")` returns GPT-4o reply
+- System prompt: personality-forward Slack assistant with Slack markdown, concise responses; teases upcoming capabilities (Coda, GitHub, logs/traces)
+- Expose single `async get_response(messages: list[dict]) -> str` — takes full conversation history as `[{"role": "user"|"assistant", "content": str}]` instead of a plain string, enabling multi-turn context
+- **Verify**: test script calling `get_response([{"role": "user", "content": "hello"}])` returns GPT-4o reply
 
 ### Step 6: Wire Agent into Handlers
-- Replace stub echo in `app_mention` handler with `get_response()` call
+- Add `build_thread_history(client, channel, thread_ts, bot_user_id) -> list[dict]` helper:
+  - Fetches full thread via `conversations_replies`
+  - Strips `<@mention>` prefixes, truncates each message to 4000 chars
+  - Tags each message as `"assistant"` (bot) or `"user"` based on `bot_id`/`user_id`
+- Replace stub echo in `app_mention` handler with `get_response()` call:
+  - If in an existing thread (`thread_ts` present): fetch full thread history via `build_thread_history` and pass to agent
+  - If a new top-level mention: send just the current stripped message
 - Add `reaction_added` handler:
   - Filter on configured trigger emoji
   - Fetch original message via `conversations_history(latest=ts, inclusive=True, limit=1)`
   - Skip if message is from the bot itself (prevent loops)
-  - Call `get_response()` with message text
+  - Call `get_response()` with single-message history
   - Post reply in thread via `chat_postMessage`
-- Both handlers: try/except with error logging + "sorry" message to user
-- **Verify**: @mention → LLM reply; emoji reaction → LLM reply in thread
+- Add `message` event handler (`handle_thread_message`) for thread continuity:
+  - Fires on any message in a thread the bot is already participating in
+  - Skips: top-level posts, bot messages, subtypes, messages containing `<@mention>` (handled by `app_mention`)
+  - Fetches full thread history; if no prior bot message found, silently skips
+  - Calls `get_response()` with full history and replies in thread
+- All handlers: try/except with error logging + "sorry" fallback to user
+- **Verify**: @mention → LLM reply; reply in thread → bot continues conversation; emoji reaction → LLM reply in thread
 
 ### Step 7: Docker & Deploy
 - Create `Dockerfile` (python:3.12-slim, uv for deps)
@@ -102,6 +113,9 @@ pydantic-settings>=2.5,<3
 - **Single uvicorn worker**: Mandatory — multiple workers = duplicate Slack event processing
 - **LangGraph from day 1**: Even with no tools, using `create_react_agent` means adding tools later is a one-line change
 - **Module-level agent singleton**: The LangGraph graph is stateless and safe to share
+- **Conversation history over single message**: `get_response` accepts `list[dict]` so the agent has full thread context; this is a one-time change that unlocks multi-turn conversations for all handlers
+- **`reload=True` in dev**: uvicorn `reload=True` in `main.py` for fast local iteration; should be disabled in production
+- **Thread continuity via `message` event**: Bot replies to any message in a thread it's already in, without requiring an explicit @mention every time
 
 ## Edge Cases to Handle
 
@@ -110,6 +124,9 @@ pydantic-settings>=2.5,<3
 - Emoji on message in channel bot isn't in → `conversations_history` fails, handle gracefully
 - Long messages → truncate to ~4000 chars before sending to LLM
 - Empty messages after stripping mention → ignore silently
+- `message` event fires on all channel messages including bot's own → guard with `bot_id`/`subtype` checks
+- `message` events containing `<@mention>` must be skipped — they're handled by `app_mention` to avoid double responses
+- Thread reply without prior bot participation → fetch history, check for any `"assistant"` role before the last message, skip if none found
 
 ## Verification
 
