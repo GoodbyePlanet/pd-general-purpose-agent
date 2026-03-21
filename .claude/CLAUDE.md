@@ -54,10 +54,10 @@ All config via environment variables (see `.env.example`):
 - `SLACK_APP_TOKEN` — xapp-... (App-Level Token for Socket Mode)
 - `OPENAI_API_KEY` — sk-...
 - `OPENAI_MODEL` — default: gpt-4o
-- `TRIGGER_EMOJI` — emoji name that triggers the bot (default: pidi)
+- `TRIGGER_EMOJI` — emoji name that triggers the bot (default: midi)
 
 ## Code Style
 
 - Use async/await throughout — never block the event loop
 - Keep it simple — no premature abstractions
-- Error handling: try/except in Slack handlers, log exceptions, send "sorry" to user
+- Error handling: try/except in Slack handlers, log exceptions, send "sorry" to a user

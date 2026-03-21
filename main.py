@@ -15,7 +15,7 @@ def main():
         host=settings.host,
         port=settings.port,
         workers=1,  # must be 1 — multiple workers cause duplicate Slack events
-        reload=True,
+        reload=settings.reload,
         log_level=settings.log_level.lower(),
     )
 

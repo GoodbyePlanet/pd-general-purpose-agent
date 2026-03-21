@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     host: str = "0.0.0.0"
     port: int = 8000
+    reload: bool = False
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

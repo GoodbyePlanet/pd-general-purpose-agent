@@ -10,7 +10,7 @@
 | 4 | Slack Bot with Stub Responses | Done | See details below |
 | 5 | LangGraph Agent | Done | See details below |
 | 6 | Wire Agent into Handlers | Done | See details below |
-| 7 | Docker & Deploy | Not Started | Dockerfile, docker-compose.yml, Hetzner deploy |
+| 7 | Docker & Deploy | In Progress | Dockerfile and docker-compose.yml created; need Docker daemon to verify build |
 | 8 | Polish | Not Started | .gitignore, README |
 
 ---
@@ -93,6 +93,20 @@
   - try/except with error logging and "sorry" fallback on both handlers
 
 **Verified:** @mention → LLM reply; emoji reaction → LLM reply in thread
+
+---
+
+## Step 7: Docker & Deploy — In Progress
+
+**Files created:**
+- `Dockerfile` — `python:3.12-slim` base; installs `uv` from official image; copies `pyproject.toml` + `uv.lock` first for layer caching; runs `uv sync --frozen --no-dev`; CMD runs uvicorn directly (no `reload=True`)
+- `docker-compose.yml` — single `agent` service; `restart: unless-stopped`; `env_file: .env`; port 8000; healthcheck hitting `/health` every 30s
+
+**Notes:**
+- `reload=True` disabled in Docker CMD (only in `main.py` for local dev)
+- Deploy on Hetzner: `git pull && docker compose up -d --build`
+
+**Pending:** Verify `docker compose up --build` works locally (Docker daemon not running at time of writing)
 
 ---
 
