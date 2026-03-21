@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o"
     trigger_emoji: str = "pidi"
     log_level: str = "INFO"
+    tavily_api_key: str = ""
+    tavily_max_results: int = 3
     host: str = "0.0.0.0"
     port: int = 8000
     reload: bool = False

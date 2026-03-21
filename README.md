@@ -5,7 +5,7 @@ Internal Slack AI assistant for PD company. Responds to @mentions and emoji reac
 ## How it works
 
 - **@mention** the bot in any channel → it replies in thread
-- **React with the trigger emoji** (default: 🤖 `robot_face`) to any message → it replies in thread
+- **React with the trigger emoji** (default: `pidi`) to any message → it replies in thread
 
 ## Setup
 
