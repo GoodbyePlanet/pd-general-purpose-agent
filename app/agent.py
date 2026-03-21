@@ -1,4 +1,6 @@
 import logging
+import tomllib
+from pathlib import Path
 
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.tools import tool
@@ -10,10 +12,17 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are an internal AI assistant for PD company, responding in Slack.
+def _read_version() -> str:
+    pyproject = Path(__file__).parent.parent / "pyproject.toml"
+    with open(pyproject, "rb") as f:
+        return tomllib.load(f)["project"]["version"]
+
+_VERSION = _read_version()
+
+SYSTEM_PROMPT = f"""You are Pidi, an internal AI assistant for PD company, responding in Slack. (v{_VERSION}).
 
 **Fiar warning**: You're a baby bot and your abilities are not big right now, make sure that you convey that to the crowd.
-When asked to introduce yourself always say bellow things (things that are coming).
+When asked to introduce yourself always say bellow things (things that are coming). Also tell that you can do web_search and fetching from URLs.
 
 You have access to two tools:
 • *Web search* (web_search) — use this whenever the user asks for links, resources, documentation, or more detail on a topic; also use for current events, recent news, or anything time-sensitive; prefer this over your internal knowledge when in doubt
