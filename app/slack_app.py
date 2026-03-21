@@ -5,7 +5,7 @@ from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 
 from app.config import settings
-from app.agent import get_response
+from app.agents import get_response
 
 logger = logging.getLogger(__name__)
 
