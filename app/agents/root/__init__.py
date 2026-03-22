@@ -1,7 +1,7 @@
 import logging
 
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 
 from app.agents.root.prompt import ROOT_SYSTEM_PROMPT
 from app.agents.web_research import web_research
@@ -14,10 +14,10 @@ _llm = ChatOpenAI(
     api_key=settings.openai_api_key,
 )
 
-_root_agent = create_react_agent(
+_root_agent = create_agent(
     model=_llm,
     tools=[web_research],
-    prompt=ROOT_SYSTEM_PROMPT,
+    system_prompt=ROOT_SYSTEM_PROMPT,
 )
 
 

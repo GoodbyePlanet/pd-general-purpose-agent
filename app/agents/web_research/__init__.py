@@ -2,7 +2,7 @@ import logging
 
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 
 from app.config import settings
 from app.agents.web_research.prompt import WEB_RESEARCH_SYSTEM_PROMPT
@@ -15,10 +15,10 @@ _llm = ChatOpenAI(
     api_key=settings.openai_api_key,
 )
 
-_web_research_agent = create_react_agent(
+_web_research_agent = create_agent(
     model=_llm,
     tools=_build_research_tools(),
-    prompt=WEB_RESEARCH_SYSTEM_PROMPT,
+    system_prompt=WEB_RESEARCH_SYSTEM_PROMPT,
 )
 
 
