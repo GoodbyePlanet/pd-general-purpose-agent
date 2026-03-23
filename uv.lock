@@ -1171,7 +1171,7 @@ wheels = [
 
 [[package]]
 name = "pd-general-purpose-agent"
-version = "2.1.0"
+version = "2.3.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiohttp" },

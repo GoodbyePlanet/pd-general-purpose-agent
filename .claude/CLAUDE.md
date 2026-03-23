@@ -45,7 +45,7 @@ docker compose up --build
 
 - Single process, single uvicorn worker (mandatory for Socket Mode — multiple workers = duplicate events)
 - FastAPI lifespan manages Socket Mode lifecycle: `connect_async()` on startup, `disconnect_async()` on shutdown
-- LangGraph `create_agent` with empty tools list (ready for tool additions in V2)
+- LangChain `create_agent` with empty tools list (ready for tool additions in V2)
 
 ## Configuration
 
