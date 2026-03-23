@@ -117,7 +117,7 @@ flowchart TD
 
 ## Multi-Agent Architecture
 
-The agent layer uses a two-tier hierarchy built with LangGraph's `create_react_agent` (ReAct loop).
+The agent layer uses a two-tier hierarchy built with LangGraph's `create_agent`.
 
 ```mermaid
 flowchart TB
