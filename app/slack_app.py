@@ -1,4 +1,5 @@
 import logging
+import random
 import re
 
 from slack_bolt.async_app import AsyncApp
@@ -27,11 +28,25 @@ async def build_thread_history(client, channel: str, thread_ts: str, bot_user_id
     return history
 
 
+THINKING_MESSAGES = [
+    ":hourglass_flowing_sand: Thinking...",
+    ":brain: Let me think about that...",
+    ":thinking_face: Hmm, give me a moment...",
+    ":mag: Looking into it...",
+    ":gear: Processing your request...",
+]
+
+
+def _get_thinking_message() -> str:
+    return random.choice(THINKING_MESSAGES)
+
+
 @slack_app.event("app_mention")
 async def handle_mention(event, client, say):
     logger.info(f"Handling app_mention event: {event}")
     thread_ts = event.get("thread_ts") or event.get("ts")
     channel = event["channel"]
+    loading_msg = None
     try:
         bot_info = await client.auth_test()
         bot_user_id = bot_info["user_id"]
@@ -50,11 +65,23 @@ async def handle_mention(event, client, say):
         if not messages:
             return
 
+        loading_msg = await client.chat_postMessage(
+            channel=channel, thread_ts=thread_ts, text=_get_thinking_message(),
+        )
+
         reply = await get_response(messages)
-        await say(text=reply, thread_ts=thread_ts)
+        await client.chat_update(
+            channel=channel, ts=loading_msg["ts"], text=reply,
+        )
     except Exception:
         logger.exception("Error handling app_mention")
-        await say(text="Sorry, something went wrong.", thread_ts=thread_ts)
+        error_text = "Sorry, something went wrong."
+        if loading_msg:
+            await client.chat_update(
+                channel=channel, ts=loading_msg["ts"], text=error_text,
+            )
+        else:
+            await say(text=error_text, thread_ts=thread_ts)
 
 
 @slack_app.event("message")
@@ -76,6 +103,7 @@ async def handle_thread_message(event, client, say):
 
     channel = event["channel"]
 
+    loading_msg = None
     try:
         bot_info = await client.auth_test()
         bot_user_id = bot_info["user_id"]
@@ -91,11 +119,23 @@ async def handle_thread_message(event, client, say):
         if not messages:
             return
 
+        loading_msg = await client.chat_postMessage(
+            channel=channel, thread_ts=thread_ts, text=_get_thinking_message(),
+        )
+
         reply = await get_response(messages)
-        await say(text=reply, thread_ts=thread_ts)
+        await client.chat_update(
+            channel=channel, ts=loading_msg["ts"], text=reply,
+        )
     except Exception:
         logger.exception("Error handling thread message")
-        await say(text="Sorry, something went wrong.", thread_ts=thread_ts)
+        error_text = "Sorry, something went wrong."
+        if loading_msg:
+            await client.chat_update(
+                channel=channel, ts=loading_msg["ts"], text=error_text,
+            )
+        else:
+            await say(text=error_text, thread_ts=thread_ts)
 
 
 @slack_app.event("reaction_added")
@@ -107,6 +147,7 @@ async def handle_reaction(event, client):
     channel = event["item"]["channel"]
     message_ts = event["item"]["ts"]
 
+    loading_msg = None
     try:
         result = await client.conversations_history(
             channel=channel,
@@ -129,19 +170,25 @@ async def handle_reaction(event, client):
         if not text:
             return
 
+        loading_msg = await client.chat_postMessage(
+            channel=channel, thread_ts=message_ts, text=_get_thinking_message(),
+        )
+
         reply = await get_response([{"role": "user", "content": text[:4000]}])
-        await client.chat_postMessage(
-            channel=channel,
-            thread_ts=message_ts,
-            text=reply,
+        await client.chat_update(
+            channel=channel, ts=loading_msg["ts"], text=reply,
         )
     except Exception:
         logger.exception("Error handling reaction_added")
         try:
-            await client.chat_postMessage(
-                channel=channel,
-                thread_ts=message_ts,
-                text="Sorry, something went wrong.",
-            )
+            error_text = "Sorry, something went wrong."
+            if loading_msg:
+                await client.chat_update(
+                    channel=channel, ts=loading_msg["ts"], text=error_text,
+                )
+            else:
+                await client.chat_postMessage(
+                    channel=channel, thread_ts=message_ts, text=error_text,
+                )
         except Exception:
             logger.exception("Failed to send error message")
