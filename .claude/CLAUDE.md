@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Internal Slack AI agent for PD company. Responds to @mentions and emoji reactions in Slack threads using GPT-4o via LangGraph.
+Internal Slack AI agent for PD company. Responds to @mentions and emoji reactions in Slack threads using Claude (Anthropic) via LangGraph.
 
 ## Tech Stack
 
@@ -10,7 +10,7 @@ Internal Slack AI agent for PD company. Responds to @mentions and emoji reaction
 - **FastAPI** — HTTP server (health checks, future APIs)
 - **slack-bolt[async]** — Slack integration via Socket Mode (WebSocket)
 - **LangGraph + LangChain** — Agent orchestration
-- **langchain-openai** — GPT-4o LLM provider
+- **langchain-anthropic** — Claude LLM provider
 - **pydantic-settings** — Configuration management
 - **Docker** — Deployment on Hetzner VPS
 
@@ -52,8 +52,8 @@ docker compose up --build
 All config via environment variables (see `.env.example`):
 - `SLACK_BOT_TOKEN` — xoxb-... (Bot User OAuth Token)
 - `SLACK_APP_TOKEN` — xapp-... (App-Level Token for Socket Mode)
-- `OPENAI_API_KEY` — sk-...
-- `OPENAI_MODEL` — default: gpt-4o
+- `ANTHROPIC_API_KEY` — Anthropic API key
+- `ANTHROPIC_MODEL` — default: claude-haiku-4-5-20251001
 - `TRIGGER_EMOJI` — emoji name that triggers the bot (default: midi)
 
 ## Code Style

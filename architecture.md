@@ -13,14 +13,14 @@ graph TB
             SM[Socket Mode<br/>WebSocket]
             FA[FastAPI<br/>:8000]
             SH[Slack Event Handlers]
-            RA[Root Agent<br/>GPT-4o + ReAct]
-            WRA[Web Research Agent<br/>GPT-4o + ReAct]
+            RA[Root Agent<br/>Claude + ReAct]
+            WRA[Web Research Agent<br/>Claude + ReAct]
         end
     end
 
     subgraph External APIs
         SAPI[Slack API]
-        OAI[OpenAI API]
+        ANT[Anthropic API]
         TAV[Tavily Search API]
         WEB[Public Web]
     end
@@ -32,8 +32,8 @@ graph TB
     RA -- "tool call" --> WRA
     WRA -- "web_search()" --> TAV
     WRA -- "fetch_url()" --> WEB
-    RA -. "LLM calls" .-> OAI
-    WRA -. "LLM calls" .-> OAI
+    RA -. "LLM calls" .-> ANT
+    WRA -. "LLM calls" .-> ANT
     SH -- "reply in thread" --> SAPI
     SAPI --> U
     FA -- "/health" --> FA
@@ -121,14 +121,14 @@ The agent layer uses a two-tier hierarchy built with LangChain's `create_agent`.
 
 ```mermaid
 flowchart TB
-    subgraph "Root Agent (GPT-4o)"
+    subgraph "Root Agent (Claude)"
         direction TB
         RP[System Prompt:<br/>You are Pidi, an internal AI assistant...]
         REACT1[ReAct Loop]
         RP --> REACT1
     end
 
-    subgraph "Web Research Agent (GPT-4o)"
+    subgraph "Web Research Agent (Claude)"
         direction TB
         WRP[System Prompt:<br/>You are a web research assistant...]
         REACT2[ReAct Loop]
@@ -154,18 +154,18 @@ flowchart TB
 sequenceDiagram
     participant Slack Handler
     participant Root Agent
-    participant OpenAI
+    participant Anthropic
     participant Web Research
     participant Tavily
     participant Web
 
     Slack Handler->>Root Agent: get_response(messages)
-    Root Agent->>OpenAI: messages + tools schema
-    OpenAI-->>Root Agent: tool_call: web_research("...")
+    Root Agent->>Anthropic: messages + tools schema
+    Anthropic-->>Root Agent: tool_call: web_research("...")
 
     Root Agent->>Web Research: web_research(task)
-    Web Research->>OpenAI: task + tools schema
-    OpenAI-->>Web Research: tool_call: web_search("...")
+    Web Research->>Anthropic: task + tools schema
+    Anthropic-->>Web Research: tool_call: web_search("...")
 
     Web Research->>Tavily: search(query)
     Tavily-->>Web Research: results[]
@@ -174,12 +174,12 @@ sequenceDiagram
     Web Research->>Web: GET url
     Web-->>Web Research: page content
 
-    Web Research->>OpenAI: tool results
-    OpenAI-->>Web Research: final summary
+    Web Research->>Anthropic: tool results
+    Anthropic-->>Web Research: final summary
     Web Research-->>Root Agent: raw findings
 
-    Root Agent->>OpenAI: tool result + context
-    OpenAI-->>Root Agent: formatted Slack response
+    Root Agent->>Anthropic: tool result + context
+    Anthropic-->>Root Agent: formatted Slack response
     Root Agent-->>Slack Handler: reply text
     Slack Handler->>Slack Handler: say() / chat_postMessage()
 ```
@@ -197,7 +197,7 @@ graph LR
     end
 
     C -- "WebSocket" --> S[Slack API]
-    C -- "HTTPS" --> O[OpenAI API]
+    C -- "HTTPS" --> O[Anthropic API]
     C -- "HTTPS" --> T[Tavily API]
 ```
 

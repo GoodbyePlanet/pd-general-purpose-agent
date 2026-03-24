@@ -1,6 +1,6 @@
 import logging
 
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain.agents import create_agent
 
 from app.agents.root.prompt import ROOT_SYSTEM_PROMPT
@@ -9,9 +9,9 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-_llm = ChatOpenAI(
-    model=settings.openai_model,
-    api_key=settings.openai_api_key,
+_llm = ChatAnthropic(
+    model=settings.anthropic_model,
+    anthropic_api_key=settings.anthropic_api_key,
 )
 
 _root_agent = create_agent(

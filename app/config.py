@@ -4,8 +4,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     slack_bot_token: str
     slack_app_token: str
-    openai_api_key: str
-    openai_model: str = "gpt-4o"
+    anthropic_api_key: str
+    anthropic_model: str = "claude-haiku-4-5-20251001"
     trigger_emoji: str = "pidi"
     log_level: str = "INFO"
     tavily_api_key: str = ""

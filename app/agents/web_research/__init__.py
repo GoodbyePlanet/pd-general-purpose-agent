@@ -1,7 +1,7 @@
 import logging
 
 from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain.agents import create_agent
 
 from app.config import settings
@@ -10,9 +10,9 @@ from app.agents.web_research.tools import _build_research_tools
 
 logger = logging.getLogger(__name__)
 
-_llm = ChatOpenAI(
-    model=settings.openai_model,
-    api_key=settings.openai_api_key,
+_llm = ChatAnthropic(
+    model=settings.anthropic_model,
+    anthropic_api_key=settings.anthropic_api_key,
 )
 
 _web_research_agent = create_agent(
